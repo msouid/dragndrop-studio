@@ -22,12 +22,13 @@ import {
   useExportImage,
   type PlacedItem,
 } from '../hooks/useCanvasHooks'
+import { CANVAS_CONFIG } from '../config/canvasConfig'
 
-// Constants
-const DEFAULT_ITEM_SIZE = 80
-const ITEM_OFFSET = DEFAULT_ITEM_SIZE / 2
-const RESIZE_STEP = 10
-const DRAG_ACTIVATION_DISTANCE = 5
+// Use centralized config
+const DEFAULT_ITEM_SIZE = CANVAS_CONFIG.item.defaultSize
+const ITEM_OFFSET = CANVAS_CONFIG.drag.itemOffset
+const RESIZE_STEP = CANVAS_CONFIG.resize.step
+const DRAG_ACTIVATION_DISTANCE = CANVAS_CONFIG.drag.activationDistance
 
 interface PhotoCanvasProps {
   photoUrl: string
@@ -114,17 +115,22 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
         const sourceItem = items?.find((item) => item.id === active.id)
         if (sourceItem && canvasRef.current && event.activatorEvent instanceof PointerEvent) {
           const rect = canvasRef.current.getBoundingClientRect()
-          const dropX = event.activatorEvent.clientX - rect.left
-          const dropY = event.activatorEvent.clientY - rect.top
+          // Calculate final position based on where the pointer was when dragging started plus the delta
+          const initialX = event.activatorEvent.clientX - rect.left
+          const initialY = event.activatorEvent.clientY - rect.top
 
-          // Calculate final position with bounds checking
+          // Apply delta to get final pointer position over canvas
+          const pointerFinalX = initialX + (delta?.x || 0)
+          const pointerFinalY = initialY + (delta?.y || 0)
+
+          // Center the item on the pointer position
           const finalX = Math.max(
             0,
-            Math.min(dropX + (delta?.x || 0) - ITEM_OFFSET, canvasSize.width - DEFAULT_ITEM_SIZE)
+            Math.min(pointerFinalX - ITEM_OFFSET, canvasSize.width - DEFAULT_ITEM_SIZE)
           )
           const finalY = Math.max(
             0,
-            Math.min(dropY + (delta?.y || 0) - ITEM_OFFSET, canvasSize.height - DEFAULT_ITEM_SIZE)
+            Math.min(pointerFinalY - ITEM_OFFSET, canvasSize.height - DEFAULT_ITEM_SIZE)
           )
 
           const newItem: PlacedItem = {
@@ -191,50 +197,49 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Canvas Area */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-lg p-4">
-            <div className="mb-4">
+          <div className="card">
+            <div className="mb-8">
               {/* Main header row */}
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800">
-                  Step 2: Decorate Your Photo
-                </h2>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <h2 className="text-4xl">Step 2: Decorate Your Photo</h2>
                 <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={undo}
                     disabled={!canUndo}
-                    className="min-h-[44px] bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm"
+                    className="btn-tonal"
                     aria-label="Undo last action (Ctrl+Z)"
                   >
-                    ↶ Undo
+                    ↶ <span className="hidden sm:inline">Undo</span>
                   </button>
                   <button
                     onClick={redo}
                     disabled={!canRedo}
-                    className="min-h-[44px] bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm"
+                    className="btn-tonal"
                     aria-label="Redo last action (Ctrl+Y)"
                   >
-                    ↷ Redo
+                    ↷ <span className="hidden sm:inline">Redo</span>
                   </button>
                   <button
                     onClick={onRetake}
-                    className="min-h-[44px] bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm"
+                    className="btn-outlined"
                     aria-label="Retake photo"
                   >
-                    Retake
+                    <span className="hidden sm:inline">Retake</span>
+                    <span className="sm:hidden">📷</span>
                   </button>
                   <button
                     onClick={handleExport}
                     disabled={placedItems.length === 0 || isExporting}
-                    className="min-h-[44px] bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm flex items-center gap-1"
+                    className="btn-success"
                     aria-label={isExporting ? 'Exporting image' : 'Export final decorated image'}
                     aria-busy={isExporting}
                   >
                     {isExporting ? (
                       <>
-                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" aria-hidden="true" />
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" aria-hidden="true" />
                         <span className="hidden sm:inline">Exporting...</span>
                       </>
                     ) : (
@@ -259,46 +264,46 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
 
             {/* Edit toolbar - shown under photo when item is selected */}
             {selectedItem && (
-              <fieldset className="border border-blue-300 rounded-lg p-3 mt-4 bg-blue-50">
-                <legend className="text-sm font-semibold text-blue-900 px-2">
+              <fieldset className="surface-container mt-8">
+                <legend className="text-lg font-medium text-gray-900 px-2">
                   ✏️ Edit Selected Item
                 </legend>
                 {/* Mobile: 3 rows | Desktop: 1 row */}
-                <div className="flex flex-col lg:flex-row gap-2 mt-3 lg:gap-2">
+                <div className="flex flex-col lg:flex-row gap-3 mt-6 lg:gap-4">
                   <button
                     onClick={() => handleRotate(selectedItem.id, -1)}
-                    className="flex-1 min-h-[44px] bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+                    className="btn-filled flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Rotate item counter-clockwise"
                   >
-                    ↺ Rotate Left
+                    ↺ <span className="hidden sm:inline">Left</span>
                   </button>
                   <button
                     onClick={() => handleRotate(selectedItem.id, 1)}
-                    className="flex-1 min-h-[44px] bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+                    className="btn-filled flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Rotate item clockwise"
                   >
-                    ↻ Rotate Right
+                    ↻ <span className="hidden sm:inline">Right</span>
                   </button>
                   <button
                     onClick={() => handleResize(selectedItem.id, -RESIZE_STEP)}
-                    className="flex-1 min-h-[44px] bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+                    className="btn-success flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Decrease item size"
                   >
-                    − Smaller
+                    − <span className="hidden sm:inline">Small</span>
                   </button>
                   <button
                     onClick={() => handleResize(selectedItem.id, RESIZE_STEP)}
-                    className="flex-1 min-h-[44px] bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+                    className="btn-success flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Increase item size"
                   >
-                    + Larger
+                    + <span className="hidden sm:inline">Large</span>
                   </button>
                   <button
                     onClick={() => handleRemoveItem(selectedItem.id)}
-                    className="flex-1 min-h-[44px] bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm lg:w-auto"
+                    className="btn-danger flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Delete selected item"
                   >
-                    ✕ Delete
+                    ✕ <span className="hidden sm:inline">Delete</span>
                   </button>
                 </div>
               </fieldset>
@@ -308,22 +313,20 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
 
       {/* Items Panel */}
       <aside className="lg:col-span-1" aria-label="Jewelry collection sidebar">
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 sticky top-4">
-          <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">
-            💎 Dental Jewelry Collection
-          </h3>
+        <div className="card sticky top-4">
+          <h3 className="text-headlineMedium mb-8">💎 Dental Jewelry Collection</h3>
 
           {isLoading && (
             <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600" aria-hidden="true"></div>
+              <div className="animate-spin rounded-full h-14 w-14 border-3 border-primary-80" aria-hidden="true"></div>
               <span className="sr-only">Loading jewelry items...</span>
             </div>
           )}
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-300 rounded-lg" role="alert">
-              <p className="text-red-800 text-sm font-semibold">Error</p>
-              <p className="text-red-800 text-sm">
+            <div className="p-4 bg-error-10 border-l-4 border-error-70 rounded-lg" role="alert">
+              <p className="text-error-70 text-xs font-semibold">Error</p>
+              <p className="text-error-70 text-sm mt-2">
                 Failed to load jewelry items. Please try again.
               </p>
             </div>
@@ -331,10 +334,10 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
 
           {items && (
             <>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-gray-700 mb-4">
                 Drag any jewelry piece onto your photo.
               </p>
-              <div className="grid grid-cols-2 gap-3" role="region" aria-label="Draggable jewelry items">
+              <div className="grid grid-cols-2 gap-4" role="region" aria-label="Draggable jewelry items">
                 {items.map((item) => (
                   <DraggableListItem key={item.id} item={item} />
                 ))}
@@ -342,13 +345,13 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
             </>
           )}
 
-          <div className="mt-6 p-3 bg-indigo-50 rounded-lg text-xs text-gray-700 border border-indigo-200">
-            <p className="font-bold mb-2 text-indigo-900">⌨️ Keyboard Shortcuts:</p>
-            <ul className="space-y-1">
-              <li><kbd className="px-1 py-0.5 bg-white border border-gray-300 rounded">Ctrl+Z</kbd> Undo</li>
-              <li><kbd className="px-1 py-0.5 bg-white border border-gray-300 rounded">Ctrl+Y</kbd> / <kbd className="px-1 py-0.5 bg-white border border-gray-300 rounded">Ctrl+Shift+Z</kbd> Redo</li>
-              <li><kbd className="px-1 py-0.5 bg-white border border-gray-300 rounded">Delete</kbd> / <kbd className="px-1 py-0.5 bg-white border border-gray-300 rounded">Backspace</kbd> Remove selected</li>
-              <li><kbd className="px-1 py-0.5 bg-white border border-gray-300 rounded">Esc</kbd> Deselect</li>
+          <div className="mt-8 p-6 bg-gray-50 rounded-2xl text-sm text-gray-700 border-l-4 border-gray-300">
+            <p className="font-semibold mb-4 text-gray-900">⌨️ Keyboard Shortcuts:</p>
+            <ul className="space-y-2">
+              <li><kbd className="px-2 py-1 bg-primary-99 border border-outline-variant rounded text-xs font-medium">Ctrl+Z</kbd> <span className="text-sm">Undo</span></li>
+              <li><kbd className="px-2 py-1 bg-primary-99 border border-outline-variant rounded text-xs font-medium">Ctrl+Y</kbd> <span className="text-sm">/</span> <kbd className="px-2 py-1 bg-primary-99 border border-outline-variant rounded text-xs font-medium">Ctrl+Shift+Z</kbd> <span className="text-sm">Redo</span></li>
+              <li><kbd className="px-2 py-1 bg-primary-99 border border-outline-variant rounded text-xs font-medium">Delete</kbd> <span className="text-sm">/</span> <kbd className="px-2 py-1 bg-primary-99 border border-outline-variant rounded text-xs font-medium">Backspace</kbd> <span className="text-sm">Remove</span></li>
+              <li><kbd className="px-2 py-1 bg-primary-99 border border-outline-variant rounded text-xs font-medium">Esc</kbd> <span className="text-sm">Deselect</span></li>
             </ul>
           </div>
         </div>
@@ -361,7 +364,7 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
         const listItem = items?.find((item) => item.id === activeId)
         if (listItem) {
           return (
-            <div className="w-20 h-20 opacity-80">
+            <div className="w-12 h-12 opacity-80">
               <img
                 src={listItem.image}
                 alt={listItem.name}
@@ -425,8 +428,8 @@ const DroppableCanvas = memo(function DroppableCanvas({
         setNodeRef(node)
         canvasRef.current = node
       }}
-      className={`relative bg-gray-100 rounded-lg overflow-visible ${
-        isOver ? 'ring-4 ring-blue-400 bg-blue-50' : ''
+      className={`relative bg-primary-99 rounded-2xl overflow-visible transition-all duration-150 ${
+        isOver ? 'ring-4 ring-primary-70 bg-primary-99 shadow-elevation-3' : 'shadow-elevation-1'
       }`}
       onClick={onDeselect}
     >
@@ -462,7 +465,7 @@ const DraggableListItem = memo(function DraggableListItem({ item }: { item: Drag
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`p-4 border-2 border-gray-200 hover:border-blue-500 rounded-lg hover:shadow-md bg-gray-50 hover:bg-blue-50 group cursor-grab active:cursor-grabbing select-none transition-opacity ${
+      className={`p-2 border border-gray-300 hover:border-primary-70 rounded-lg hover:shadow-elevation-1 bg-white hover:bg-gray-50 group cursor-grab active:cursor-grabbing select-none transition-all duration-150 ${
         isDragging ? 'opacity-50' : 'opacity-100'
       }`}
       style={{ touchAction: 'none' }}
@@ -471,10 +474,10 @@ const DraggableListItem = memo(function DraggableListItem({ item }: { item: Drag
       <img
         src={item.image}
         alt={item.name}
-        className="w-full h-16 object-contain mb-2 pointer-events-none select-none"
+        className="w-full h-10 object-contain mb-1 pointer-events-none select-none"
         draggable={false}
       />
-      <p className="text-xs text-gray-700 group-hover:text-blue-700 font-medium select-none text-center">
+      <p className="text-xs text-gray-900 group-hover:text-gray-700 font-medium select-none text-center">
         {item.name}
       </p>
     </div>
@@ -524,7 +527,7 @@ const PlacedDraggableItem = memo(
         {...listeners}
         {...attributes}
         className={`absolute cursor-move select-none ${
-          isSelected ? 'ring-4 ring-blue-500 ring-opacity-50 z-10' : ''
+          isSelected ? 'ring-4 ring-primary-70 ring-opacity-30 z-10 shadow-elevation-2' : ''
         } ${isDragging ? 'opacity-0' : ''}`}
         style={style}
         onClick={handleClick}

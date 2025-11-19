@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import { CANVAS_CONFIG } from '../config/canvasConfig'
 
 interface PhotoCaptureProps {
   onCapture: (photoDataUrl: string) => void
@@ -23,8 +24,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: CANVAS_CONFIG.camera.video.ideal.width },
+          height: { ideal: CANVAS_CONFIG.camera.video.ideal.height },
         },
         audio: false,
       })
@@ -90,8 +91,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: newMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: CANVAS_CONFIG.camera.video.ideal.width },
+          height: { ideal: CANVAS_CONFIG.camera.video.ideal.height },
         },
         audio: false,
       })
@@ -117,10 +118,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
 
   return (
     <section className="max-w-3xl mx-auto" aria-label="Photo capture section">
-      <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-        <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-800">
-          Step 1: Capture Your Photo
-        </h2>
+      <div className="card">
+        <h2 className="text-4xl mb-8">Step 1: Capture Your Photo</h2>
 
         {/* Screen reader announcements */}
         <div
@@ -135,17 +134,17 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
         {error && (
           <div
             ref={errorRef}
-            className="mb-4 p-4 bg-red-50 border-2 border-red-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="mb-6 p-4 bg-error-10 border-l-4 border-error-70 rounded-lg focus:outline-none focus:ring-2 focus:ring-error-70"
             role="alert"
             tabIndex={-1}
           >
-            <p className="text-red-800 text-sm font-semibold">Error:</p>
-            <p className="text-red-800 text-sm">{error}</p>
+            <p className="text-error-70 text-xs font-semibold">Error:</p>
+            <p className="text-error-70 text-sm mt-2">{error}</p>
           </div>
         )}
 
-        <div className="space-y-4 w-full">
-          <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video min-h-[300px] md:min-h-[400px] w-full max-w-full">
+        <div className="space-y-6 w-full">
+          <div className="relative bg-gray-100 rounded-2xl overflow-hidden aspect-video min-h-[300px] md:min-h-[400px] w-full max-w-full shadow-elevation-1">
             <video
               ref={videoRef}
               autoPlay
@@ -156,7 +155,7 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
             />
             {!isCameraActive && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center text-gray-400">
+                <div className="text-center text-gray-600">
                   <svg
                     className="mx-auto h-16 w-16 mb-2"
                     fill="none"
@@ -188,11 +187,11 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
             {!isCameraActive ? (
               <button
                 onClick={startCamera}
-                className="flex-1 min-h-[48px] bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white font-medium py-2 sm:py-3 px-3 sm:px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="btn-filled w-full"
                 aria-label="Start camera"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -210,11 +209,11 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
               <>
                 <button
                   onClick={capturePhoto}
-                  className="flex-1 min-h-[48px] bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white font-medium py-2 sm:py-3 px-2 sm:px-4 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
+                  className="btn-success flex-1"
                   aria-label="Capture photo from camera"
                 >
                   <svg
-                    className="w-4 sm:w-5 h-4 sm:h-5"
+                    className="w-5 sm:w-6 h-5 sm:h-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -231,11 +230,11 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
                 </button>
                 <button
                   onClick={switchCamera}
-                  className="flex-1 min-h-[48px] bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-white font-medium py-2 sm:py-3 px-2 sm:px-4 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
+                  className="btn-tonal flex-1"
                   aria-label="Switch between front and back camera"
                 >
                   <svg
-                    className="w-4 sm:w-5 h-4 sm:h-5"
+                    className="w-5 sm:w-6 h-5 sm:h-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -252,11 +251,11 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
                 </button>
                 <button
                   onClick={stopCamera}
-                  className="flex-1 min-h-[48px] bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-white font-medium py-2 sm:py-3 px-2 sm:px-4 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
+                  className="btn-danger flex-1"
                   aria-label="Stop camera"
                 >
                   <svg
-                    className="w-4 sm:w-5 h-4 sm:h-5"
+                    className="w-5 sm:w-6 h-5 sm:h-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -275,8 +274,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
             )}
           </div>
 
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
+          <div className="mt-6 p-4 bg-gray-50 border-l-4 border-gray-300 rounded-lg">
+            <p className="text-sm text-gray-700">
               <strong>💡 Tip:</strong> Make sure to allow camera access when prompted.
               On mobile devices, you can switch between front and back cameras.
             </p>

@@ -1,17 +1,396 @@
 @import "tailwindcss";
 
-body {
-  @apply m-0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  /* Essential neutral colors for basic typography and contrast */
+  --color-white: oklch(100% 0 0);
+  --color-black: oklch(0% 0 0);
+
+  /* Material Design 3 - Primary Colors (Google Blue - Official) */
+  --color-primary-0: oklch(100% 0 0);
+  --color-primary-10: oklch(96.84% 0.021 254.80);
+  --color-primary-20: oklch(93.68% 0.042 254.33);
+  --color-primary-25: oklch(92.11% 0.052 254.10);
+  --color-primary-30: oklch(90.58% 0.063 253.89);
+  --color-primary-35: oklch(89.07% 0.074 253.70);
+  --color-primary-40: oklch(87.57% 0.085 253.51);
+  --color-primary-50: oklch(84.68% 0.109 252.95);
+  --color-primary-60: oklch(81.84% 0.134 252.36);
+  --color-primary-70: oklch(71.95% 0.165 251.06);
+  --color-primary-80: oklch(62.19% 0.181 249.89);
+  --color-primary-90: oklch(80.64% 0.084 253.06);
+  --color-primary-95: oklch(88.15% 0.042 253.53);
+  --color-primary-99: oklch(99.50% 0.010 254.80);
+
+  /* Material Design 3 - Secondary Colors (Google Teal) */
+  --color-secondary-0: oklch(100% 0 0);
+  --color-secondary-10: oklch(96.45% 0.024 256.97);
+  --color-secondary-20: oklch(93.13% 0.049 256.20);
+  --color-secondary-25: oklch(91.49% 0.061 255.85);
+  --color-secondary-30: oklch(89.92% 0.073 255.52);
+  --color-secondary-35: oklch(88.37% 0.085 255.22);
+  --color-secondary-40: oklch(86.85% 0.098 254.92);
+  --color-secondary-50: oklch(83.68% 0.131 254.07);
+  --color-secondary-60: oklch(80.60% 0.166 253.09);
+  --color-secondary-70: oklch(71.05% 0.199 251.15);
+  --color-secondary-80: oklch(61.29% 0.218 249.30);
+  --color-secondary-90: oklch(79.84% 0.104 254.47);
+  --color-secondary-95: oklch(87.64% 0.051 255.14);
+  --color-secondary-99: oklch(99.48% 0.012 257.12);
+
+  /* Material Design 3 - Tertiary Colors (Google Purple) */
+  --color-tertiary-0: oklch(100% 0 0);
+  --color-tertiary-10: oklch(96.38% 0.027 283.45);
+  --color-tertiary-20: oklch(93.03% 0.056 282.81);
+  --color-tertiary-25: oklch(91.37% 0.070 282.49);
+  --color-tertiary-30: oklch(89.78% 0.084 282.19);
+  --color-tertiary-35: oklch(88.21% 0.100 281.87);
+  --color-tertiary-40: oklch(86.67% 0.115 281.57);
+  --color-tertiary-50: oklch(83.44% 0.154 280.76);
+  --color-tertiary-60: oklch(80.36% 0.195 279.82);
+  --color-tertiary-70: oklch(70.37% 0.237 277.95);
+  --color-tertiary-80: oklch(60.50% 0.259 276.23);
+  --color-tertiary-90: oklch(79.45% 0.129 281.56);
+  --color-tertiary-95: oklch(87.18% 0.065 282.19);
+  --color-tertiary-99: oklch(99.45% 0.014 283.10);
+
+  /* Material Design 3 - Error Colors (Red) */
+  --color-error-0: oklch(100% 0 0);
+  --color-error-10: oklch(97.7% 0.015 27.37);
+  --color-error-20: oklch(95.4% 0.03 27.37);
+  --color-error-25: oklch(93.85% 0.0375 27.37);
+  --color-error-30: oklch(92.3% 0.045 27.37);
+  --color-error-35: oklch(90.75% 0.0525 27.37);
+  --color-error-40: oklch(89.2% 0.06 27.37);
+  --color-error-50: oklch(85.8% 0.075 27.37);
+  --color-error-60: oklch(82.4% 0.09 27.37);
+  --color-error-70: oklch(54.1% 0.2 27.37);
+  --color-error-80: oklch(47.6% 0.18 27.37);
+  --color-error-90: oklch(78.1% 0.085 27.37);
+  --color-error-95: oklch(88.2% 0.0455 27.37);
+  --color-error-99: oklch(99.6% 0.012 27.37);
+
+  /* Neutral/Outline Colors */
+  --color-outline: oklch(60% 0.02 254.80);
+  --color-outline-variant: oklch(80% 0.02 254.80);
+
+  /* Spacing - 8px Grid System */
+  --spacing-0: 0;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 28px;
+  --spacing-8: 32px;
+  --spacing-9: 36px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-14: 56px;
+  --spacing-16: 64px;
+
+  /* Border Radius - Material Design */
+  --radius-extra-small: 4px;
+  --radius-small: 8px;
+  --radius-medium: 12px;
+  --radius-large: 16px;
+  --radius-extra-large: 28px;
+
+  /* Shadows - Material Design Elevation System */
+  --shadow-0: 0 0 0 0 oklch(0% 0 0 / 0);
+  --shadow-1: 0 1px 3px oklch(0% 0 0 / 0.12), 0 1px 2px oklch(0% 0 0 / 0.24);
+  --shadow-2: 0 3px 6px oklch(0% 0 0 / 0.15), 0 2px 4px oklch(0% 0 0 / 0.12);
+  --shadow-3: 0 10px 20px oklch(0% 0 0 / 0.15), 0 3px 6px oklch(0% 0 0 / 0.1);
+  --shadow-4: 0 15px 25px oklch(0% 0 0 / 0.15), 0 5px 10px oklch(0% 0 0 / 0.05);
+  --shadow-5: 0 20px 40px oklch(0% 0 0 / 0.2), 0 8px 16px oklch(0% 0 0 / 0.1);
+
+  /* Header Color - Solid Professional Blue */
+  --color-header: oklch(62.19% 0.181 249.89);
+
+  /* Transitions */
+  --duration-short: 150ms;
+  --duration-medium: 250ms;
+  --duration-long: 300ms;
+  --duration-extra-long: 500ms;
+
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Font Families */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Oxygen",
+    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --font-mono: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+@layer base {
+  body {
+    @apply m-0 text-base;
+    background-color: oklch(100% 0 0);
+    color: oklch(0% 0 0);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+
+  code {
+    font-family: var(--font-mono);
+  }
+
+  h1 {
+    font-size: 57px;
+    line-height: 64px;
+    font-weight: 600;
+    color: oklch(0% 0 0);
+    letter-spacing: -0.5px;
+  }
+
+  h2 {
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 600;
+    color: oklch(0% 0 0);
+    letter-spacing: -0.3px;
+  }
+
+  h3 {
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 700;
+    color: oklch(0% 0 0);
+  }
+
+  h4 {
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 600;
+    color: oklch(0% 0 0);
+  }
+
+  h5 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    color: oklch(0% 0 0);
+  }
+
+  h6 {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    color: oklch(0% 0 0);
+  }
+
+  p {
+    font-size: 16px;
+    line-height: 24px;
+    color: oklch(0% 0 0);
+  }
+
+  small {
+    font-size: 12px;
+    line-height: 16px;
+    color: oklch(0% 0 0);
+  }
+}
+
+@layer components {
+  /* Button Variants */
+  .btn-filled {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-white rounded-lg transition-all min-h-12;
+    background-color: oklch(62.19% 0.181 249.89);
+    box-shadow: var(--shadow-1);
+  }
+
+  .btn-filled:hover {
+    @apply shadow-lg;
+    background-color: oklch(57% 0.18 249.80);
+    transform: translateY(-1px);
+  }
+
+  .btn-filled:active {
+    background-color: oklch(52% 0.17 249.70);
+    @apply shadow;
+    transform: translateY(0);
+  }
+
+  .btn-filled:focus {
+    @apply outline-none ring-4 ring-offset-2;
+    ring-color: oklch(71.95% 0.165 251.06);
+  }
+
+  .btn-filled:disabled {
+    background-color: oklch(80.64% 0.084 253.06);
+    color: oklch(100% 0 0);
+    opacity: 0.6;
+    @apply cursor-not-allowed;
+  }
+
+  /* Secondary Button - Neutral Gray */
+  .btn-tonal {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-gray-800 rounded-lg transition-all border border-gray-300 min-h-12;
+    background-color: oklch(98% 0 0);
+  }
+
+  .btn-tonal:hover {
+    background-color: oklch(96% 0 0);
+    border-color: oklch(75% 0 0);
+    transform: translateY(-1px);
+  }
+
+  .btn-tonal:active {
+    background-color: oklch(92% 0 0);
+    border-color: oklch(70% 0 0);
+    transform: translateY(0);
+  }
+
+  .btn-tonal:focus {
+    @apply outline-none ring-4 ring-offset-2;
+    ring-color: oklch(62.19% 0.181 249.89);
+  }
+
+  /* Outlined Button - Neutral */
+  .btn-outlined {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-gray-700 rounded-lg border-2 transition-all min-h-12;
+    border-color: oklch(85% 0 0);
+    background-color: oklch(100% 0 0);
+  }
+
+  .btn-outlined:hover {
+    border-color: oklch(75% 0 0);
+    background-color: oklch(98% 0 0);
+    transform: translateY(-1px);
+  }
+
+  .btn-outlined:active {
+    background-color: oklch(94% 0 0);
+    border-color: oklch(70% 0 0);
+    transform: translateY(0);
+  }
+
+  .btn-outlined:focus {
+    @apply outline-none ring-4 ring-offset-2;
+    ring-color: oklch(62.19% 0.181 249.89);
+  }
+
+  /* Success Button - Same as btn-filled */
+  .btn-success {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-white rounded-lg transition-all min-h-12;
+    background-color: oklch(62.19% 0.181 249.89);
+    box-shadow: var(--shadow-1);
+  }
+
+  .btn-success:hover {
+    @apply shadow-lg;
+    background-color: oklch(57% 0.18 249.80);
+    transform: translateY(-1px);
+  }
+
+  .btn-success:active {
+    background-color: oklch(52% 0.17 249.70);
+    @apply shadow;
+    transform: translateY(0);
+  }
+
+  .btn-success:focus {
+    @apply outline-none ring-4 ring-offset-2;
+    ring-color: oklch(71.95% 0.165 251.06);
+  }
+
+  /* Danger Button */
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-white rounded-lg transition-all min-h-12;
+    background-color: oklch(54.1% 0.2 27.37);
+    box-shadow: var(--shadow-1);
+  }
+
+  .btn-danger:hover {
+    background-color: oklch(56% 0.2 27.37);
+    @apply shadow-lg;
+    transform: translateY(-1px);
+  }
+
+  .btn-danger:active {
+    background-color: oklch(46.6% 0.18 27.37);
+    @apply shadow;
+    transform: translateY(0);
+  }
+
+  .btn-danger:focus {
+    @apply outline-none ring-4 ring-offset-2;
+    ring-color: oklch(54.1% 0.2 27.37);
+  }
+
+  /* Card Component */
+  .card {
+    @apply rounded-2xl p-8 transition-shadow border;
+    background-color: oklch(100% 0 0);
+    border-color: oklch(88% 0 0);
+    box-shadow: var(--shadow-1);
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-2);
+  }
+
+  /* Surface Container */
+  .surface-container {
+    @apply rounded-2xl p-8 border;
+    background-color: oklch(100% 0 0);
+    border-color: oklch(88% 0 0);
+  }
+
+  /* Icon Button */
+  .icon-button {
+    @apply inline-flex items-center justify-center p-2 rounded-lg transition-all min-h-12 min-w-12;
+    color: oklch(50% 0 0);
+  }
+
+  .icon-button:hover {
+    background-color: oklch(96% 0 0);
+    color: oklch(40% 0 0);
+  }
+
+  .icon-button:active {
+    background-color: oklch(94% 0 0);
+    color: oklch(30% 0 0);
+  }
+
+  /* Header */
+  .gradient-hero-primary {
+    background: var(--color-header);
+  }
+
+  .gradient-hero-secondary {
+    background: var(--color-header);
+  }
+
+  /* Page Background - Clean White */
+  .bg-gradient-page {
+    background: oklch(100% 0 0);
+  }
 }
 
 /* Screen reader only content */

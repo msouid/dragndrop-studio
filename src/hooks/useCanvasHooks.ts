@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { CANVAS_CONFIG } from '../config/canvasConfig'
 
 // Types
 export interface PlacedItem {
@@ -17,11 +18,11 @@ export interface CanvasSize {
   height: number
 }
 
-// Constants
-const ROTATION_STEP = 15
-const MIN_ITEM_SIZE = 20
-const MAX_ITEM_SIZE = 200
-const RESIZE_DEBOUNCE_MS = 100
+// Constants from centralized config
+const ROTATION_STEP = CANVAS_CONFIG.rotation.step
+const MIN_ITEM_SIZE = CANVAS_CONFIG.item.minSize
+const MAX_ITEM_SIZE = CANVAS_CONFIG.item.maxSize
+const RESIZE_DEBOUNCE_MS = CANVAS_CONFIG.resize.debounceMs
 
 // Utility: Debounce function
 function debounce<T extends (...args: unknown[]) => void>(
