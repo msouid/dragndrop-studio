@@ -337,7 +337,7 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
               <p className="text-sm text-gray-700 mb-4">
                 Drag any jewelry piece onto your photo.
               </p>
-              <div className="grid grid-cols-2 gap-4" role="region" aria-label="Draggable jewelry items">
+              <div className="grid grid-cols-4 md:grid-cols-3 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-4" role="region" aria-label="Draggable jewelry items">
                 {items.map((item) => (
                   <DraggableListItem key={item.id} item={item} />
                 ))}
@@ -345,7 +345,7 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
             </>
           )}
 
-          <div className="mt-8 p-6 bg-gray-50 rounded-2xl text-sm text-gray-700 border-l-4 border-gray-300">
+          <div className="hidden md:block mt-8 p-6 bg-gray-50 rounded-2xl text-sm text-gray-700 border-l-4 border-gray-300">
             <p className="font-semibold mb-4 text-gray-900">⌨️ Keyboard Shortcuts:</p>
             <ul className="space-y-2">
               <li><kbd className="px-2 py-1 bg-primary-99 border border-outline-variant rounded text-xs font-medium">Ctrl+Z</kbd> <span className="text-sm">Undo</span></li>
