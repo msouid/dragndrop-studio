@@ -6,8 +6,6 @@ A **production-ready** full-stack React application demonstrating advanced drag-
 
 **Live Demo:** [Deploy to Netlify](https://dragndropluce.netlify.app/) 
 
-**GitHub Repository:** [Your GitHub Link](https://github.com) *(Update with your repo)*
-
 ---
 
 ## ✨ Features
@@ -96,16 +94,7 @@ A **production-ready** full-stack React application demonstrating advanced drag-
 
    The app will be available at `http://localhost:3000`
 
-### Environment Variables
-
-Create a `.env.local` file in the root directory (optional):
-
-```env
-VITE_APP_TITLE=Dental Jewelry Studio
-```
-
-The application has minimal environment requirements as it uses static data.
-
+ 
 ---
 
 ## 📖 How to Use
@@ -232,21 +221,7 @@ src/
 5. **useExportImage()** - Canvas to PNG export
 
 
----
-
-## 🏗️ Building for Production
-
-Create an optimized production build:
-
-```bash
-npm run build
-```
-
-Preview the build locally:
-
-```bash
-npm run serve
-```
+ 
  
 ---
 
@@ -268,15 +243,8 @@ npm run serve
 - **Responsive images** with native img element
 
 ---
-
-## 📈 Performance Metrics
-
-- ⚡ **Lighthouse Score:** 95+
-- 📊 **Bundle Size:** ~200KB gzipped
-- 🚀 **Time to Interactive:** <1s
-- 📱 **Mobile Performance:** Optimized for 4G
-
----
+ 
+ 
 
 ## 📄 License
 
@@ -287,15 +255,7 @@ MIT License - feel free to use for personal and commercial projects
 ## 👥 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-
+ 
 ---
 
 ## 🙏 Acknowledgments
