@@ -14,14 +14,19 @@ import {
   DragOverlay,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import {
+  useCanvasHistory,
+  useCanvasSize,
+  useKeyboardShortcuts,
+  useItemOperations,
+  useExportImage,
+  type PlacedItem,
+} from '../hooks/useCanvasHooks'
 
 // Constants
 const DEFAULT_ITEM_SIZE = 80
 const ITEM_OFFSET = DEFAULT_ITEM_SIZE / 2
-const ROTATION_STEP = 15
 const RESIZE_STEP = 10
-const MIN_ITEM_SIZE = 40
-const MAX_ITEM_SIZE = 200
 const DRAG_ACTIVATION_DISTANCE = 5
 
 interface PhotoCanvasProps {
@@ -29,28 +34,30 @@ interface PhotoCanvasProps {
   onRetake: () => void
 }
 
-interface PlacedItem {
-  id: string
-  itemId: string
-  image: string
-  x: number
-  y: number
-  width: number
-  height: number
-  rotation: number
-}
-
 export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
-  const [placedItems, setPlacedItems] = useState<PlacedItem[]>([])
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [activeId, setActiveId] = useState<string | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const photoRef = useRef<HTMLImageElement>(null)
 
-  // Undo/Redo history
-  const [history, setHistory] = useState<PlacedItem[][]>([[]])
-  const [historyIndex, setHistoryIndex] = useState(0)
+  // Use custom hooks for canvas logic
+  const {
+    placedItems,
+    saveToHistory,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useCanvasHistory()
+
+  const canvasSize = useCanvasSize(photoRef)
+
+  const { handleRotate, handleResize, handleRemoveItem: hookHandleRemoveItem } = useItemOperations(
+    placedItems,
+    saveToHistory
+  )
+
+  const { handleExport, isExporting } = useExportImage(photoRef, placedItems, canvasSize)
 
   // Configure sensors for @dnd-kit
   const sensors = useSensors(
@@ -68,81 +75,23 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
     queryFn: fetchItems,
   })
 
-  // Save to history
-  const saveToHistory = useCallback((newItems: PlacedItem[]) => {
-    const newHistory = history.slice(0, historyIndex + 1)
-    newHistory.push(newItems)
-    setHistory(newHistory)
-    setHistoryIndex(newHistory.length - 1)
-    setPlacedItems(newItems)
-  }, [history, historyIndex])
+  // Wrapper for handleRemoveItem to also deselect
+  const handleRemoveItem = useCallback((itemId: string) => {
+    hookHandleRemoveItem(itemId)
+    setSelectedItemId(null)
+  }, [hookHandleRemoveItem])
 
-  // Undo function
-  const undo = useCallback(() => {
-    if (historyIndex > 0) {
-      const newIndex = historyIndex - 1
-      setHistoryIndex(newIndex)
-      setPlacedItems(history[newIndex])
-    }
-  }, [historyIndex, history])
+  // Handle keyboard shortcuts including deselect
+  useKeyboardShortcuts(undo, redo, selectedItemId, handleRemoveItem)
 
-  // Redo function
-  const redo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      const newIndex = historyIndex + 1
-      setHistoryIndex(newIndex)
-      setPlacedItems(history[newIndex])
-    }
-  }, [historyIndex, history])
-
-  // Keyboard shortcuts
+  // Listen for custom deselect event from keyboard shortcuts hook
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Undo: Ctrl+Z (Windows) or Cmd+Z (Mac)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault()
-        undo()
-      }
-      // Redo: Ctrl+Shift+Z or Ctrl+Y (Windows) or Cmd+Shift+Z (Mac)
-      if ((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key === 'z' || e.key === 'y')) {
-        e.preventDefault()
-        redo()
-      }
-      // Delete: Delete or Backspace
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedItemId) {
-        e.preventDefault()
-        handleRemoveItem(selectedItemId)
-      }
-      // Escape: Deselect
-      if (e.key === 'Escape') {
-        setSelectedItemId(null)
-      }
+    const handleDeselect = () => {
+      setSelectedItemId(null)
     }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyIndex, history, selectedItemId])
-
-  // Update canvas size when photo loads
-  useEffect(() => {
-    if (photoRef.current) {
-      const updateSize = () => {
-        if (photoRef.current) {
-          setCanvasSize({
-            width: photoRef.current.offsetWidth,
-            height: photoRef.current.offsetHeight,
-          })
-        }
-      }
-
-      photoRef.current.addEventListener('load', updateSize)
-      updateSize()
-
-      window.addEventListener('resize', updateSize)
-      return () => window.removeEventListener('resize', updateSize)
-    }
-  }, [photoUrl])
+    window.addEventListener('deselect', handleDeselect)
+    return () => window.removeEventListener('deselect', handleDeselect)
+  }, [])
 
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -223,98 +172,6 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
     setActiveId(null)
   }, [items, canvasSize, placedItems, activeId, saveToHistory])
 
-  const handleRemoveItem = useCallback((itemId: string) => {
-    const newItems = placedItems.filter((item) => item.id !== itemId)
-    saveToHistory(newItems)
-    setSelectedItemId(null)
-  }, [placedItems, saveToHistory])
-
-  const handleRotate = useCallback((itemId: string, direction: number) => {
-    const newItems = placedItems.map((item) =>
-      item.id === itemId
-        ? { ...item, rotation: (item.rotation + direction * ROTATION_STEP) % 360 }
-        : item
-    )
-    saveToHistory(newItems)
-  }, [placedItems, saveToHistory])
-
-  const handleResize = useCallback((itemId: string, delta: number) => {
-    const newItems = placedItems.map((item) =>
-      item.id === itemId
-        ? {
-            ...item,
-            width: Math.max(MIN_ITEM_SIZE, Math.min(MAX_ITEM_SIZE, item.width + delta)),
-            height: Math.max(MIN_ITEM_SIZE, Math.min(MAX_ITEM_SIZE, item.height + delta)),
-          }
-        : item
-    )
-    saveToHistory(newItems)
-  }, [placedItems, saveToHistory])
-
-  const handleExport = useCallback(async () => {
-    if (!canvasRef.current || !photoRef.current) return
-
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    canvas.width = photoRef.current.naturalWidth
-    canvas.height = photoRef.current.naturalHeight
-
-    const scaleX = canvas.width / canvasSize.width
-    const scaleY = canvas.height / canvasSize.height
-
-    // Draw the photo
-    ctx.drawImage(photoRef.current, 0, 0)
-
-    // Load all images first before drawing
-    const imagePromises = placedItems.map((item) => {
-      return new Promise<{ img: HTMLImageElement; item: PlacedItem }>((resolve, reject) => {
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        img.onload = () => resolve({ img, item })
-        img.onerror = reject
-        img.src = item.image
-      })
-    })
-
-    try {
-      const loadedImages = await Promise.all(imagePromises)
-
-      // Draw all placed items
-      loadedImages.forEach(({ img, item }) => {
-        ctx.save()
-        ctx.translate(
-          (item.x + item.width / 2) * scaleX,
-          (item.y + item.height / 2) * scaleY
-        )
-        ctx.rotate((item.rotation * Math.PI) / 180)
-        ctx.drawImage(
-          img,
-          (-item.width / 2) * scaleX,
-          (-item.height / 2) * scaleY,
-          item.width * scaleX,
-          item.height * scaleY
-        )
-        ctx.restore()
-      })
-
-      // Download the image
-      canvas.toBlob((blob) => {
-        if (!blob) return
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `dental-jewelry-${Date.now()}.png`
-        a.click()
-        URL.revokeObjectURL(url)
-      })
-    } catch (error) {
-      console.error('Failed to load images for export:', error)
-      alert('Failed to export image. Please try again.')
-    }
-  }, [placedItems, canvasSize])
-
   const selectedItem = useMemo(
     () => placedItems.find((item) => item.id === selectedItemId),
     [placedItems, selectedItemId]
@@ -338,33 +195,56 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
         {/* Canvas Area */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg shadow-lg p-4">
-            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-              <h2 className="text-2xl font-semibold text-gray-800">
-                Step 2: Decorate Your Photo
-              </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={undo}
-                  disabled={historyIndex === 0}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                  title="Undo (Ctrl+Z)"
-                >
-                  ↶ Undo
-                </button>
-                <button
-                  onClick={redo}
-                  disabled={historyIndex === history.length - 1}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                  title="Redo (Ctrl+Y)"
-                >
-                  ↷ Redo
-                </button>
-                <button
-                  onClick={onRetake}
-                  className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                >
-                  Retake Photo
-                </button>
+            <div className="mb-4">
+              {/* Main header row */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800">
+                  Step 2: Decorate Your Photo
+                </h2>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={undo}
+                    disabled={!canUndo}
+                    className="min-h-[44px] bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm"
+                    aria-label="Undo last action (Ctrl+Z)"
+                  >
+                    ↶ Undo
+                  </button>
+                  <button
+                    onClick={redo}
+                    disabled={!canRedo}
+                    className="min-h-[44px] bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm"
+                    aria-label="Redo last action (Ctrl+Y)"
+                  >
+                    ↷ Redo
+                  </button>
+                  <button
+                    onClick={onRetake}
+                    className="min-h-[44px] bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm"
+                    aria-label="Retake photo"
+                  >
+                    Retake
+                  </button>
+                  <button
+                    onClick={handleExport}
+                    disabled={placedItems.length === 0 || isExporting}
+                    className="min-h-[44px] bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm flex items-center gap-1"
+                    aria-label={isExporting ? 'Exporting image' : 'Export final decorated image'}
+                    aria-busy={isExporting}
+                  >
+                    {isExporting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" aria-hidden="true" />
+                        <span className="hidden sm:inline">Exporting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>⬇️</span>
+                        <span className="hidden sm:inline">Export</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
             <DroppableCanvas
@@ -377,79 +257,72 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
               onSelectItem={handleSelectItem}
             />
 
-            {/* Controls for selected item */}
-          {selectedItem && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm font-medium text-blue-900 mb-3">
-                Selected Item Controls
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleRotate(selectedItem.id, -1)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-sm"
-                  title="Rotate left"
-                >
-                  ↺ Rotate Left
-                </button>
-                <button
-                  onClick={() => handleRotate(selectedItem.id, 1)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-sm"
-                  title="Rotate right"
-                >
-                  ↻ Rotate Right
-                </button>
-                <button
-                  onClick={() => handleResize(selectedItem.id, RESIZE_STEP)}
-                  className="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-sm"
-                  title="Make larger"
-                >
-                  + Larger
-                </button>
-                <button
-                  onClick={() => handleResize(selectedItem.id, -RESIZE_STEP)}
-                  className="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-sm"
-                  title="Make smaller"
-                >
-                  - Smaller
-                </button>
-                <button
-                  onClick={() => handleRemoveItem(selectedItem.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-sm"
-                  title="Remove item"
-                >
-                  ✕ Remove
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4">
-            <button
-              onClick={handleExport}
-              disabled={placedItems.length === 0}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors"
-            >
-              Export Final Image
-            </button>
-          </div>
+            {/* Edit toolbar - shown under photo when item is selected */}
+            {selectedItem && (
+              <fieldset className="border border-blue-300 rounded-lg p-3 mt-4 bg-blue-50">
+                <legend className="text-sm font-semibold text-blue-900 px-2">
+                  ✏️ Edit Selected Item
+                </legend>
+                {/* Mobile: 3 rows | Desktop: 1 row */}
+                <div className="flex flex-col lg:flex-row gap-2 mt-3 lg:gap-2">
+                  <button
+                    onClick={() => handleRotate(selectedItem.id, -1)}
+                    className="flex-1 min-h-[44px] bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+                    aria-label="Rotate item counter-clockwise"
+                  >
+                    ↺ Rotate Left
+                  </button>
+                  <button
+                    onClick={() => handleRotate(selectedItem.id, 1)}
+                    className="flex-1 min-h-[44px] bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+                    aria-label="Rotate item clockwise"
+                  >
+                    ↻ Rotate Right
+                  </button>
+                  <button
+                    onClick={() => handleResize(selectedItem.id, -RESIZE_STEP)}
+                    className="flex-1 min-h-[44px] bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+                    aria-label="Decrease item size"
+                  >
+                    − Smaller
+                  </button>
+                  <button
+                    onClick={() => handleResize(selectedItem.id, RESIZE_STEP)}
+                    className="flex-1 min-h-[44px] bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+                    aria-label="Increase item size"
+                  >
+                    + Larger
+                  </button>
+                  <button
+                    onClick={() => handleRemoveItem(selectedItem.id)}
+                    className="flex-1 min-h-[44px] bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm lg:w-auto"
+                    aria-label="Delete selected item"
+                  >
+                    ✕ Delete
+                  </button>
+                </div>
+              </fieldset>
+            )}
         </div>
       </div>
 
       {/* Items Panel */}
-      <div className="lg:col-span-1">
-        <div className="bg-white rounded-lg shadow-lg p-4 sticky top-4">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+      <aside className="lg:col-span-1" aria-label="Jewelry collection sidebar">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 sticky top-4">
+          <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">
             💎 Dental Jewelry Collection
           </h3>
 
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+            <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600" aria-hidden="true"></div>
+              <span className="sr-only">Loading jewelry items...</span>
             </div>
           )}
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-4 bg-red-50 border border-red-300 rounded-lg" role="alert">
+              <p className="text-red-800 text-sm font-semibold">Error</p>
               <p className="text-red-800 text-sm">
                 Failed to load jewelry items. Please try again.
               </p>
@@ -459,9 +332,9 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
           {items && (
             <>
               <p className="text-sm text-gray-600 mb-4">
-                Drag any jewelry piece onto your photo
+                Drag any jewelry piece onto your photo.
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3" role="region" aria-label="Draggable jewelry items">
                 {items.map((item) => (
                   <DraggableListItem key={item.id} item={item} />
                 ))}
@@ -479,10 +352,10 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
             </ul>
           </div>
         </div>
-      </div>
+      </aside>
     </div>
 
-    <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={null}>
       {activeId && (() => {
         // Check if dragging from list
         const listItem = items?.find((item) => item.id === activeId)
@@ -534,8 +407,8 @@ const DroppableCanvas = memo(function DroppableCanvas({
   onDeselect,
   onSelectItem,
 }: {
-  canvasRef: React.RefObject<HTMLDivElement>
-  photoRef: React.RefObject<HTMLImageElement>
+  canvasRef: React.RefObject<HTMLDivElement | null>
+  photoRef: React.RefObject<HTMLImageElement | null>
   photoUrl: string
   placedItems: PlacedItem[]
   selectedItemId: string | null
@@ -550,11 +423,9 @@ const DroppableCanvas = memo(function DroppableCanvas({
     <div
       ref={(node) => {
         setNodeRef(node)
-        if (canvasRef) {
-          ;(canvasRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-        }
+        canvasRef.current = node
       }}
-      className={`relative bg-gray-100 rounded-lg overflow-hidden ${
+      className={`relative bg-gray-100 rounded-lg overflow-visible ${
         isOver ? 'ring-4 ring-blue-400 bg-blue-50' : ''
       }`}
       onClick={onDeselect}
@@ -603,58 +474,80 @@ const DraggableListItem = memo(function DraggableListItem({ item }: { item: Drag
         className="w-full h-16 object-contain mb-2 pointer-events-none select-none"
         draggable={false}
       />
-      <p className="text-xs text-gray-700 group-hover:text-blue-700 font-medium select-none">
+      <p className="text-xs text-gray-700 group-hover:text-blue-700 font-medium select-none text-center">
         {item.name}
       </p>
     </div>
   )
 })
 
-// Placed draggable item on canvas
-const PlacedDraggableItem = memo(function PlacedDraggableItem({
-  item,
-  isSelected,
-  onSelect,
-}: {
-  item: PlacedItem
-  isSelected: boolean
-  onSelect: () => void
-}) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: item.id,
-  })
+// Placed draggable item on canvas - Optimized with deep comparison
+const PlacedDraggableItem = memo(
+  function PlacedDraggableItem({
+    item,
+    isSelected,
+    onSelect,
+  }: {
+    item: PlacedItem
+    isSelected: boolean
+    onSelect: () => void
+  }) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+      id: item.id,
+    })
 
-  const style = {
-    left: `${item.x}px`,
-    top: `${item.y}px`,
-    width: `${item.width}px`,
-    height: `${item.height}px`,
-    transform: CSS.Transform.toString(transform),
-    transformOrigin: 'center',
-    rotate: `${item.rotation}deg`,
-    touchAction: 'none' as const,
-  }
+    const style = useMemo(
+      () => ({
+        left: `${item.x}px`,
+        top: `${item.y}px`,
+        width: `${item.width}px`,
+        height: `${item.height}px`,
+        transform: CSS.Transform.toString(transform),
+        transformOrigin: 'center',
+        rotate: `${item.rotation}deg`,
+        touchAction: 'none' as const,
+      }),
+      [item.x, item.y, item.width, item.height, item.rotation, transform]
+    )
 
-  return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`absolute cursor-move select-none ${
-        isSelected ? 'ring-4 ring-blue-500 ring-opacity-50 z-10' : ''
-      } ${isDragging ? 'opacity-0' : ''}`}
-      style={style}
-      onClick={(e) => {
+    const handleClick = useCallback(
+      (e: React.MouseEvent) => {
         e.stopPropagation()
         onSelect()
-      }}
-    >
-      <img
-        src={item.image}
-        alt="Decoration"
-        className="w-full h-full object-contain pointer-events-none"
-        draggable={false}
-      />
-    </div>
-  )
-})
+      },
+      [onSelect]
+    )
+
+    return (
+      <div
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        className={`absolute cursor-move select-none ${
+          isSelected ? 'ring-4 ring-blue-500 ring-opacity-50 z-10' : ''
+        } ${isDragging ? 'opacity-0' : ''}`}
+        style={style}
+        onClick={handleClick}
+      >
+        <img
+          src={item.image}
+          alt="Decoration"
+          className="w-full h-full object-contain pointer-events-none"
+          draggable={false}
+        />
+      </div>
+    )
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison: only re-render if relevant props change
+    return (
+      prevProps.item.x === nextProps.item.x &&
+      prevProps.item.y === nextProps.item.y &&
+      prevProps.item.width === nextProps.item.width &&
+      prevProps.item.height === nextProps.item.height &&
+      prevProps.item.rotation === nextProps.item.rotation &&
+      prevProps.isSelected === nextProps.isSelected &&
+      prevProps.onSelect === nextProps.onSelect
+    )
+  }
+)

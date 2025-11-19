@@ -7,15 +7,18 @@ interface PhotoCaptureProps {
 export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const errorRef = useRef<HTMLDivElement>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isCameraActive, setIsCameraActive] = useState(false)
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
+  const [ariaLive, setAriaLive] = useState<string>('')
 
   const startCamera = async () => {
     try {
       setError(null)
       setIsCameraActive(false)
+      setAriaLive('Starting camera...')
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -30,6 +33,7 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
         videoRef.current.srcObject = mediaStream
         setStream(mediaStream)
         setIsCameraActive(true)
+        setAriaLive('Camera is now active. Ready to capture photo.')
 
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
@@ -41,10 +45,12 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
       }
     } catch (err) {
       console.error('Error accessing camera:', err)
-      setError(
+      const errorMsg =
         'Unable to access camera. Please ensure you have granted camera permissions.'
-      )
+      setError(errorMsg)
+      setAriaLive(errorMsg)
       setIsCameraActive(false)
+      errorRef.current?.focus()
     }
   }
 
@@ -110,26 +116,43 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
   }, [stream])
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+    <section className="max-w-3xl mx-auto" aria-label="Photo capture section">
+      <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+        <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-800">
           Step 1: Capture Your Photo
         </h2>
 
+        {/* Screen reader announcements */}
+        <div
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {ariaLive}
+        </div>
+
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div
+            ref={errorRef}
+            className="mb-4 p-4 bg-red-50 border-2 border-red-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            role="alert"
+            tabIndex={-1}
+          >
+            <p className="text-red-800 text-sm font-semibold">Error:</p>
             <p className="text-red-800 text-sm">{error}</p>
           </div>
         )}
 
         <div className="space-y-4">
-          <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video min-h-[400px]">
+          <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video min-h-[300px] md:min-h-[400px]">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
               className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
+              aria-label="Camera preview feed"
             />
             {!isCameraActive && (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -165,7 +188,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
             {!isCameraActive ? (
               <button
                 onClick={startCamera}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex-1 min-h-[48px] bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                aria-label="Start camera"
               >
                 <svg
                   className="w-5 h-5"
@@ -186,7 +210,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
               <>
                 <button
                   onClick={capturePhoto}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 min-h-[48px] bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  aria-label="Capture photo from camera"
                 >
                   <svg
                     className="w-5 h-5"
@@ -205,8 +230,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
                 </button>
                 <button
                   onClick={switchCamera}
-                  className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
-                  title="Switch camera"
+                  className="min-h-[48px] bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  aria-label="Switch between front and back camera"
                 >
                   <svg
                     className="w-5 h-5"
@@ -225,7 +250,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
                 </button>
                 <button
                   onClick={stopCamera}
-                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="min-h-[48px] bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  aria-label="Stop camera"
                 >
                   <svg
                     className="w-5 h-5"
@@ -248,12 +274,12 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
 
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Tip:</strong> Make sure to allow camera access when prompted.
+              <strong>💡 Tip:</strong> Make sure to allow camera access when prompted.
               On mobile devices, you can switch between front and back cameras.
             </p>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
