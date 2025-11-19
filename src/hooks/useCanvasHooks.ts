@@ -19,7 +19,7 @@ export interface CanvasSize {
 
 // Constants
 const ROTATION_STEP = 15
-const MIN_ITEM_SIZE = 40
+const MIN_ITEM_SIZE = 20
 const MAX_ITEM_SIZE = 200
 const RESIZE_DEBOUNCE_MS = 100
 

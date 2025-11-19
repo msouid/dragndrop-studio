@@ -144,8 +144,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
           </div>
         )}
 
-        <div className="space-y-4">
-          <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video min-h-[300px] md:min-h-[400px]">
+        <div className="space-y-4 w-full">
+          <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video min-h-[300px] md:min-h-[400px] w-full max-w-full">
             <video
               ref={videoRef}
               autoPlay
@@ -184,11 +184,11 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
 
           <canvas ref={canvasRef} className="hidden" />
 
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-2 sm:gap-3 w-full">
             {!isCameraActive ? (
               <button
                 onClick={startCamera}
-                className="flex-1 min-h-[48px] bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex-1 min-h-[48px] bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-white font-medium py-2 sm:py-3 px-3 sm:px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
                 aria-label="Start camera"
               >
                 <svg
@@ -210,11 +210,11 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
               <>
                 <button
                   onClick={capturePhoto}
-                  className="flex-1 min-h-[48px] bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 min-h-[48px] bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white font-medium py-2 sm:py-3 px-2 sm:px-4 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
                   aria-label="Capture photo from camera"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 sm:w-5 h-4 sm:h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -226,15 +226,16 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
                       d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
                     />
                   </svg>
-                  Capture Photo
+                  <span className="hidden sm:inline">Capture</span>
+                  <span className="sm:hidden">Cap</span>
                 </button>
                 <button
                   onClick={switchCamera}
-                  className="min-h-[48px] bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 min-h-[48px] bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-white font-medium py-2 sm:py-3 px-2 sm:px-4 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
                   aria-label="Switch between front and back camera"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 sm:w-5 h-4 sm:h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -246,15 +247,16 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
-                  Switch
+                  <span className="hidden sm:inline">Switch</span>
+                  <span className="sm:hidden">Flip</span>
                 </button>
                 <button
                   onClick={stopCamera}
-                  className="min-h-[48px] bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 min-h-[48px] bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-white font-medium py-2 sm:py-3 px-2 sm:px-4 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
                   aria-label="Stop camera"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 sm:w-5 h-4 sm:h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -266,7 +268,8 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
                       d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
-                  Stop
+                  <span className="hidden sm:inline">Stop</span>
+                  <span className="sm:hidden">End</span>
                 </button>
               </>
             )}
