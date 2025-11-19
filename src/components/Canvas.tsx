@@ -268,39 +268,39 @@ export default function PhotoCanvas({ photoUrl, onRetake }: PhotoCanvasProps) {
                 <legend className="text-lg font-medium text-gray-900 px-2">
                   ✏️ Edit Selected Item
                 </legend>
-                {/* Mobile: 3 rows | Desktop: 1 row */}
-                <div className="flex flex-col lg:flex-row gap-3 mt-6 lg:gap-4">
+                {/* Mobile: 1 row (compact) | Desktop: 1 row with more gap */}
+                <div className="flex flex-row gap-1 mt-3 lg:gap-4 lg:mt-4 flex-wrap">
                   <button
                     onClick={() => handleRotate(selectedItem.id, -1)}
-                    className="btn-filled flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
+                    className="btn-filled flex-1 px-1 sm:px-2 lg:px-4 text-xs sm:text-sm lg:text-base py-1 sm:py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Rotate item counter-clockwise"
                   >
                     ↺ <span className="hidden sm:inline">Left</span>
                   </button>
                   <button
                     onClick={() => handleRotate(selectedItem.id, 1)}
-                    className="btn-filled flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
+                    className="btn-filled flex-1 px-1 sm:px-2 lg:px-4 text-xs sm:text-sm lg:text-base py-1 sm:py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Rotate item clockwise"
                   >
                     ↻ <span className="hidden sm:inline">Right</span>
                   </button>
                   <button
                     onClick={() => handleResize(selectedItem.id, -RESIZE_STEP)}
-                    className="btn-success flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
+                    className="btn-success flex-1 px-1 sm:px-2 lg:px-4 text-xs sm:text-sm lg:text-base py-1 sm:py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Decrease item size"
                   >
                     − <span className="hidden sm:inline">Small</span>
                   </button>
                   <button
                     onClick={() => handleResize(selectedItem.id, RESIZE_STEP)}
-                    className="btn-success flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
+                    className="btn-success flex-1 px-1 sm:px-2 lg:px-4 text-xs sm:text-sm lg:text-base py-1 sm:py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Increase item size"
                   >
                     + <span className="hidden sm:inline">Large</span>
                   </button>
                   <button
                     onClick={() => handleRemoveItem(selectedItem.id)}
-                    className="btn-danger flex-1 text-sm lg:text-base py-2 lg:py-3 whitespace-nowrap"
+                    className="btn-danger flex-1 px-1 sm:px-2 lg:px-4 text-xs sm:text-sm lg:text-base py-1 sm:py-2 lg:py-3 whitespace-nowrap"
                     aria-label="Delete selected item"
                   >
                     ✕ <span className="hidden sm:inline">Delete</span>
