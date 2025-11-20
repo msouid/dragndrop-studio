@@ -19,9 +19,17 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
   const [isCameraActive, setIsCameraActive] = useState(false)
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
   const [ariaLive, setAriaLive] = useState<string>('')
+  const [isMobile, setIsMobile] = useState(false)
 
-  // Smile detection
-  const smileDetection = useSmileDetection(videoRef, isCameraActive, 500)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Smile detection (disabled on mobile)
+  const smileDetection = useSmileDetection(videoRef, isCameraActive && !isMobile, 500)
 
   const startCamera = async () => {
     try {
@@ -184,6 +192,7 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
             videoRef={videoRef}
             isCameraActive={isCameraActive}
             smileDetection={smileDetection}
+            isMobile={isMobile}
           />
 
           <canvas ref={canvasRef} className="hidden" />

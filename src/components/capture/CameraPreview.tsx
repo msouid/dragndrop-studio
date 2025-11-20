@@ -5,9 +5,10 @@ interface CameraPreviewProps {
     videoRef: React.RefObject<HTMLVideoElement | null>
     isCameraActive: boolean
     smileDetection: ReturnType<typeof useSmileDetection>
+    isMobile?: boolean
 }
 
-export function CameraPreview({ videoRef, isCameraActive, smileDetection }: CameraPreviewProps) {
+export function CameraPreview({ videoRef, isCameraActive, smileDetection, isMobile = false }: CameraPreviewProps) {
     return (
         <div className={`relative rounded-2xl overflow-hidden aspect-video min-h-[300px] md:min-h-[400px] w-full max-w-full transition-all duration-500 ${isCameraActive ? 'shadow-[0_0_30px_rgba(100,50,255,0.3)] ring-1 ring-white/20' : 'bg-black/40 border border-white/10'
             }`}>
@@ -46,8 +47,8 @@ export function CameraPreview({ videoRef, isCameraActive, smileDetection }: Came
                 </div>
             )}
 
-            {/* Smile & Teeth Detection Indicator */}
-            {isCameraActive && (
+            {/* Smile & Teeth Detection Indicator (Desktop Only) */}
+            {isCameraActive && !isMobile && (
                 <DetectionStatus smileDetection={smileDetection} />
             )}
         </div>
