@@ -204,6 +204,7 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
             onStopCamera={stopCamera}
             onSwitchCamera={switchCamera}
             onCapture={capturePhoto}
+            isMobile={isMobile}
           />
 
           <div className="mt-6 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-2">

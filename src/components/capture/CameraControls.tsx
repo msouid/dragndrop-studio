@@ -7,6 +7,7 @@ interface CameraControlsProps {
     onStopCamera: () => void
     onSwitchCamera: () => void
     onCapture: () => void
+    isMobile?: boolean
 }
 
 export function CameraControls({
@@ -16,7 +17,10 @@ export function CameraControls({
     onStopCamera,
     onSwitchCamera,
     onCapture,
+    isMobile = false,
 }: CameraControlsProps) {
+    const canCapture = isMobile || smileDetection.readyToCapture
+
     return (
         <div className="flex gap-4 w-full">
             {!isCameraActive ? (
@@ -44,16 +48,16 @@ export function CameraControls({
                 <>
                     <button
                         onClick={onCapture}
-                        disabled={!smileDetection.readyToCapture}
-                        className={`flex-1 btn-primary flex items-center justify-center gap-2 ${!smileDetection.readyToCapture && 'opacity-50 grayscale cursor-not-allowed'
+                        disabled={!canCapture}
+                        className={`flex-1 btn-primary flex items-center justify-center gap-2 ${!canCapture && 'opacity-50 grayscale cursor-not-allowed'
                             }`}
                         aria-label={
-                            smileDetection.readyToCapture
+                            canCapture
                                 ? 'Capture photo from camera'
                                 : 'Smile with visible teeth to capture'
                         }
                     >
-                        <div className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${smileDetection.readyToCapture ? 'animate-pulse' : ''}`}>
+                        <div className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${canCapture ? 'animate-pulse' : ''}`}>
                             <div className="w-4 h-4 bg-white rounded-full" />
                         </div>
                         <span className="hidden sm:inline">Capture</span>
