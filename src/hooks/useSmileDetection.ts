@@ -196,18 +196,23 @@ export function useSmileDetection(
       return
     }
 
-    // Initialize models on first run
-    initializeModels()
+    // Initialize models and start detection
+    const setupDetection = async () => {
+      await initializeModels()
 
-    // Start detection interval after models are loaded
-    const startDetectionTimeout = setTimeout(() => {
-      if (modelsLoadedRef.current && videoRef.current) {
+      if (videoRef.current && modelsLoadedRef.current) {
+        // Clear any existing interval
+        if (detectionIntervalRef.current) {
+          clearInterval(detectionIntervalRef.current)
+        }
+        // Start new interval
         detectionIntervalRef.current = setInterval(detectSmile, intervalMs)
       }
-    }, 2000) // Wait 2 seconds for models to load from CDN
+    }
+
+    setupDetection()
 
     return () => {
-      clearTimeout(startDetectionTimeout)
       if (detectionIntervalRef.current) {
         clearInterval(detectionIntervalRef.current)
         detectionIntervalRef.current = null
