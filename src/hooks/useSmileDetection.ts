@@ -54,15 +54,16 @@ export function useSmileDetection(
       ])
 
       modelsLoadedRef.current = true
+      console.log('FaceAPI models loaded successfully')
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to load face detection models'
+      console.error('Model initialization error:', error)
       setDetectionResult((prev) => ({
         ...prev,
-        error: errorMessage,
+        error: `Model Error: ${errorMessage}`,
         detectionInProgress: false,
       }))
-      console.error('Model initialization error:', error)
     }
   }, [])
 

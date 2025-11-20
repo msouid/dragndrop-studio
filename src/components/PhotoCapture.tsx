@@ -29,6 +29,15 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
       setIsCameraActive(false)
       setAriaLive('Starting camera...')
 
+      // Check for secure context (required for camera access on mobile)
+      if (window.isSecureContext === false) {
+        throw new Error('Camera access requires a secure connection (HTTPS). If testing on mobile, please use localhost or setup HTTPS.')
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API is not supported in this browser.')
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode,
@@ -48,14 +57,27 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
           if (videoRef.current) {
             videoRef.current.play().catch((err) => {
               console.error('Video play error:', err)
+              setError(`Video play error: ${err.message}`)
             })
           }
         }
       }
     } catch (err) {
       console.error('Error accessing camera:', err)
-      const errorMsg =
-        'Unable to access camera. Please ensure you have granted camera permissions.'
+      let errorMsg = 'Unable to access camera.'
+
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          errorMsg = 'Camera permission denied. Please allow camera access in your browser settings.'
+        } else if (err.name === 'NotFoundError') {
+          errorMsg = 'No camera found on this device.'
+        } else if (err.name === 'NotReadableError') {
+          errorMsg = 'Camera is in use by another application.'
+        } else {
+          errorMsg = err.message
+        }
+      }
+
       setError(errorMsg)
       setAriaLive(errorMsg)
       setIsCameraActive(false)
