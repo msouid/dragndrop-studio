@@ -1,5 +1,10 @@
 import { useRef, useState, useEffect } from 'react'
 import { CANVAS_CONFIG } from '../config/canvasConfig'
+import { useSmileDetection } from '../hooks/useSmileDetection'
+
+// Sub-components
+import { CameraPreview } from './capture/CameraPreview'
+import { CameraControls } from './capture/CameraControls'
 
 interface PhotoCaptureProps {
   onCapture: (photoDataUrl: string) => void
@@ -14,6 +19,9 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
   const [isCameraActive, setIsCameraActive] = useState(false)
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
   const [ariaLive, setAriaLive] = useState<string>('')
+
+  // Smile detection
+  const smileDetection = useSmileDetection(videoRef, isCameraActive, 500)
 
   const startCamera = async () => {
     try {
@@ -118,8 +126,14 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
 
   return (
     <section className="max-w-3xl mx-auto" aria-label="Photo capture section">
-      <div className="card">
-        <h2 className="text-4xl mb-8">Step 1: Capture Your Photo</h2>
+      <div className="glass-panel p-8 relative overflow-hidden group">
+        {/* Decorative glow behind the card */}
+        <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-full blur-3xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+        <h2 className="text-3xl font-bold mb-8 text-white flex items-center gap-3">
+          <span className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--color-primary-dim)] text-lg">1</span>
+          Capture Your Photo
+        </h2>
 
         {/* Screen reader announcements */}
         <div
@@ -134,151 +148,42 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
         {error && (
           <div
             ref={errorRef}
-            className="mb-6 p-4 bg-error-10 border-l-4 border-error-70 rounded-lg focus:outline-none focus:ring-2 focus:ring-error-70"
+            className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
             role="alert"
             tabIndex={-1}
           >
-            <p className="text-error-70 text-xs font-semibold">Error:</p>
-            <p className="text-error-70 text-sm mt-2">{error}</p>
+            <p className="text-red-400 text-xs font-semibold uppercase tracking-wider">Error</p>
+            <p className="text-red-200 text-sm mt-1">{error}</p>
           </div>
         )}
 
-        <div className="space-y-6 w-full">
-          <div className="relative bg-gray-100 rounded-2xl overflow-hidden aspect-video min-h-[300px] md:min-h-[400px] w-full max-w-full shadow-elevation-1">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
-              aria-label="Camera preview feed"
-            />
-            {!isCameraActive && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center text-gray-600">
-                  <svg
-                    className="mx-auto h-16 w-16 mb-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  <p>Camera preview will appear here</p>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="space-y-8 w-full relative z-10">
+          <CameraPreview
+            videoRef={videoRef}
+            isCameraActive={isCameraActive}
+            smileDetection={smileDetection}
+          />
 
           <canvas ref={canvasRef} className="hidden" />
 
-          <div className="flex gap-2 sm:gap-3 w-full">
-            {!isCameraActive ? (
-              <button
-                onClick={startCamera}
-                className="btn-filled w-full"
-                aria-label="Start camera"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-                Start Camera
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={capturePhoto}
-                  className="btn-success flex-1"
-                  aria-label="Capture photo from camera"
-                >
-                  <svg
-                    className="w-5 sm:w-6 h-5 sm:h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">Capture</span>
-                  <span className="sm:hidden">Cap</span>
-                </button>
-                <button
-                  onClick={switchCamera}
-                  className="btn-tonal flex-1"
-                  aria-label="Switch between front and back camera"
-                >
-                  <svg
-                    className="w-5 sm:w-6 h-5 sm:h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">Switch</span>
-                  <span className="sm:hidden">Flip</span>
-                </button>
-                <button
-                  onClick={stopCamera}
-                  className="btn-danger flex-1"
-                  aria-label="Stop camera"
-                >
-                  <svg
-                    className="w-5 sm:w-6 h-5 sm:h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">Stop</span>
-                  <span className="sm:hidden">End</span>
-                </button>
-              </>
-            )}
-          </div>
+          <CameraControls
+            isCameraActive={isCameraActive}
+            smileDetection={smileDetection}
+            onStartCamera={startCamera}
+            onStopCamera={stopCamera}
+            onSwitchCamera={switchCamera}
+            onCapture={capturePhoto}
+          />
 
-          <div className="mt-6 p-4 bg-gray-50 border-l-4 border-gray-300 rounded-lg">
-            <p className="text-sm text-gray-700">
-              <strong>💡 Tip:</strong> Make sure to allow camera access when prompted.
-              On mobile devices, you can switch between front and back cameras.
-            </p>
+          <div className="mt-6 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-2">
+            <div className="flex items-start gap-3">
+              <span className="text-xl">💡</span>
+              <div>
+                <p className="text-sm text-gray-300">
+                  <strong>Pro Tip:</strong> Ensure you have good lighting for the best detection results.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
